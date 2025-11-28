@@ -1,6 +1,4 @@
 // api/send-email.js
-const fetch = require('node-fetch');
-
 module.exports = async (req, res) => {
     // CORS headers
     res.setHeader('Access-Control-Allow-Origin', '*');
@@ -18,65 +16,58 @@ module.exports = async (req, res) => {
     try {
         const { name, email, code, type = 'confirmation', newPassword } = req.body;
         
-        console.log('📧 Email request received:', { email, type, code });
-
-        // EmailJS API endpoint
-        const emailjsUrl = 'https://api.emailjs.com/api/v1.0/email/send';
+        console.log('📧 Processing email request for:', email);
         
-        // Определяем шаблон сообщения
-        let templateParams = {
-            to_name: name,
-            to_email: email,
-            confirmation_code: code,
-            type: type
-        };
+        // Логируем наличие переменных (без значений для безопасности)
+        console.log('🔑 Environment variables status:', {
+            hasPublicKey: !!process.env.EMAILJS_PUBLIC_KEY,
+            hasServiceId: !!process.env.EMAILJS_SERVICE_ID,
+            hasTemplateId: !!process.env.EMAILJS_TEMPLATE_ID
+        });
 
-        if (type === 'password_reset' && newPassword) {
-            templateParams.new_password = newPassword;
-        }
-
-        // Данные для отправки в EmailJS
-        const emailData = {
-            service_id: process.env.EMAILJS_SERVICE_ID,
-            template_id: process.env.EMAILJS_TEMPLATE_ID,
-            user_id: process.env.EMAILJS_PUBLIC_KEY,
-            template_params: templateParams
-        };
-
-        // Отправка запроса к EmailJS API
-        const response = await fetch(emailjsUrl, {
+        // EmailJS API call
+        const response = await fetch('https://api.emailjs.com/api/v1.0/email/send', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
             },
-            body: JSON.stringify(emailData)
+            body: JSON.stringify({
+                service_id: process.env.EMAILJS_SERVICE_ID,
+                template_id: process.env.EMAILJS_TEMPLATE_ID,
+                user_id: process.env.EMAILJS_PUBLIC_KEY,
+                template_params: {
+                    to_name: name,
+                    to_email: email,
+                    confirmation_code: code,
+                    type: type,
+                    new_password: newPassword || ''
+                }
+            })
         });
 
         if (response.ok) {
-            console.log('✅ Email sent successfully to:', email);
-            
+            console.log('✅ Email sent successfully via EmailJS to:', email);
             res.status(200).json({ 
                 success: true, 
                 message: 'Email sent successfully',
-                email: email,
-                type: type
+                email: email
             });
         } else {
             const errorText = await response.text();
-            console.error('❌ EmailJS API error:', errorText);
-            
-            throw new Error(`EmailJS API error: ${response.status}`);
+            console.error('❌ EmailJS API error:', response.status, errorText);
+            res.status(500).json({ 
+                success: false, 
+                error: 'Email service error',
+                details: `Status: ${response.status}`
+            });
         }
         
     } catch (error) {
-        console.error('❌ Email sending error:', error);
-        
-        // Fallback - возвращаем успех для демо, но логируем ошибку
-        res.status(200).json({ 
-            success: true, 
-            message: 'Email simulation mode (check logs)',
-            error: error.message,
-            demo_mode: true
+        console.error('❌ Email sending failed:', error);
+        res.status(500).json({ 
+            success: false, 
+            error: 'Failed to send email',
+            details: error.message
         });
     }
 };
