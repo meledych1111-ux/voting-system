@@ -80,7 +80,7 @@ function startAdminRegistration() {
     code 
   }));
   
-  sendConfirmationCode("Администратор", email, code);
+  sendConfirmationCode("Администратор", email, code, 'registration');
 
   document.getElementById('authContent').innerHTML = `
     <h3>📧 Подтверждение регистрации</h3>
@@ -130,7 +130,7 @@ function startPasswordReset() {
     code 
   }));
   
-  sendConfirmationCode("Администратор", email, code);
+  sendConfirmationCode("Администратор", email, code, 'password_reset');
 
   document.getElementById('authContent').innerHTML = `
     <h3>📧 Подтверждение восстановления</h3>
@@ -160,36 +160,51 @@ function completePasswordReset() {
 }
 
 // ====== ОТПРАВКА КОДА ПОДТВЕРЖДЕНИЯ ======
-async function sendConfirmationCode(toName, toEmail, code) {
-  if (!window.EMAILJS_KEYS) {
-    await initializeEmailJS();
-  }
+async function sendConfirmationCode(toName, toEmail, code, type = 'registration') {
+    console.log("📧 Отправка кода:", { toName, toEmail, code, type });
+    
+    try {
+        if (!window.EMAILJS_KEYS) {
+            await initializeEmailJS();
+        }
 
-  if (!window.EMAILJS_KEYS || !window.EMAILJS_KEYS.serviceId) {
-    alert(`Код подтверждения: ${code}`);
-    return;
-  }
+        if (!window.EMAILJS_KEYS || !window.EMAILJS_KEYS.serviceId) {
+            throw new Error("EmailJS не настроен");
+        }
 
-  if (typeof emailjs === 'undefined') {
-    alert(`Код подтверждения: ${code}`);
-    return;
-  }
+        console.log("🔄 Отправка через EmailJS...");
 
-  try {
-    await emailjs.send(
-      window.EMAILJS_KEYS.serviceId,
-      window.EMAILJS_KEYS.templateId,
-      {
-        to_name: toName,
-        to_email: toEmail,
-        confirmation_code: code
-      }
-    );
-    console.log("✅ Код отправлен на email");
-  } catch (error) {
-    console.error("❌ Ошибка отправки:", error);
-    alert(`Код подтверждения: ${code}`);
-  }
+        // Определяем заголовок в зависимости от типа
+        const title = type === 'registration' 
+            ? "Регистрация в системе голосования" 
+            : "Восстановление пароля";
+
+        // Все поля должны совпадать с шаблоном EmailJS!
+        const templateParams = {
+            to_name: toName,
+            to_email: toEmail,
+            confirmation_code: code,
+            title: title  // ДОБАВЛЕНО ПОЛЕ TITLE
+        };
+
+        console.log("📨 Параметры отправки:", templateParams);
+
+        const result = await emailjs.send(
+            window.EMAILJS_KEYS.serviceId,
+            window.EMAILJS_KEYS.templateId,
+            templateParams
+        );
+        
+        console.log("✅ Email отправлен успешно!");
+        alert("✅ Код подтверждения отправлен на вашу почту!");
+        return true;
+        
+    } catch (error) {
+        console.error("❌ Ошибка отправки email:", error);
+        console.error("Детали ошибки:", error.text || error.message);
+        alert(`❌ Ошибка отправки email\n\nКод подтверждения: ${code}`);
+        return false;
+    }
 }
 
 // ====== ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ ======
