@@ -189,7 +189,7 @@ function changeAdminPassword() {
   admins[email].password = btoa(newPass);
   localStorage.setItem('admins', JSON.stringify(admins));
   
-  // ОТПРАВКА EMAIL С ПЕРЕМЕННЫМИ ОКРУЖЕНИЯ
+  // Отправка email с новым паролем
   if (window.EMAILJS_KEYS) {
     emailjs.send(
       window.EMAILJS_KEYS.serviceId,
@@ -217,5 +217,98 @@ function wipeAllData() {
   if (!confirm("Удалить ВСЕ данные?")) return;
   localStorage.clear();
   alert("Все данные очищены.");
+  window.location.reload();
+}
+
+// Функции для регистрации администратора (ДОБАВЛЕНО)
+function startAdminRegistration() {
+  const email = document.getElementById('adminEmail').value.trim();
+  const password = document.getElementById('adminPassword').value.trim();
+  const admins = JSON.parse(localStorage.getItem('admins')) || {};
+  
+  if (admins[email]) return alert("Уже зарегистрирован");
+  if (!email || !password) return alert("Заполните все поля");
+
+  const code = generateConfirmationCode();
+  const hashedPassword = btoa(password);
+  
+  localStorage.setItem('pendingAdmin', JSON.stringify({ 
+    email, 
+    password: hashedPassword, 
+    code 
+  }));
+
+  // Отправка кода подтверждения
+  sendConfirmationCode("Администратор", email, code);
+
+  document.getElementById('authContent').innerHTML = `
+    <h3>📧 Подтверждение регистрации</h3>
+    <p>Код отправлен на ${email}</p>
+    <input id="confirmCodeInput" type="text" placeholder="Введите код" />
+    <button onclick="completeAdminRegistration()">✅ Подтвердить</button>
+    <button onclick="renderAuth()">↩️ Назад</button>
+  `;
+}
+
+function completeAdminRegistration() {
+  const inputCode = document.getElementById('confirmCodeInput').value.trim();
+  const pending = JSON.parse(localStorage.getItem('pendingAdmin'));
+  
+  if (!pending) return alert("Нет данных для подтверждения");
+  if (inputCode !== pending.code) return alert("Неверный код");
+
+  const admins = JSON.parse(localStorage.getItem('admins')) || {};
+  admins[pending.email] = { 
+    password: pending.password,
+    created: new Date().toISOString()
+  };
+  
+  localStorage.setItem('admins', JSON.stringify(admins));
+  localStorage.setItem('loggedInAs', 'admin');
+  localStorage.setItem('adminLoggedIn', pending.email);
+  localStorage.removeItem('pendingAdmin');
+  
+  alert("✅ Регистрация завершена!");
+  renderAuth();
+}
+
+// Вспомогательные функции (ДОБАВЛЕНО)
+function generateConfirmationCode() {
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  let code = '';
+  for (let i = 0; i < 6; i++) {
+    code += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
+  return code;
+}
+
+function sendConfirmationCode(toName, toEmail, code) {
+  if (!window.EMAILJS_KEYS) {
+    alert(`Код подтверждения: ${code}`);
+    return;
+  }
+
+  emailjs.send(
+    window.EMAILJS_KEYS.serviceId,
+    window.EMAILJS_KEYS.templateId,
+    {
+      to_name: toName,
+      to_email: toEmail,
+      confirmation_code: code
+    }
+  ).then(() => {
+    console.log("✅ Код отправлен");
+  }).catch((error) => {
+    console.error("❌ Ошибка отправки:", error);
+    alert(`Код подтверждения: ${code}`);
+  });
+}
+
+function logout() {
+  localStorage.removeItem('loggedInAs');
+  localStorage.removeItem('adminLoggedIn');
+  document.getElementById('adminPanel').style.display = 'none';
+  document.getElementById('userPanel').style.display = 'none';
+  document.getElementById('authPanel').style.display = 'block';
   renderAuth();
 }
