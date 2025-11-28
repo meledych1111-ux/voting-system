@@ -1,4 +1,4 @@
-module.exports = async (req, res) => {
+export default function handler(req, res) {
   // CORS headers
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
@@ -13,4 +13,4 @@ module.exports = async (req, res) => {
     serviceId: process.env.EMAILJS_SERVICE_ID || '',
     templateId: process.env.EMAILJS_TEMPLATE_ID || ''
   });
-};
+}
