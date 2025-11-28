@@ -1,217 +1,116 @@
-/* Общий фон и шрифт */
-body {
-    margin: 0;
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    min-height: 100vh;
-    padding: 20px;
-    box-sizing: border-box;
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
 }
 
-/* Верхняя панель голосования */
-#voteHeader {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    max-width: 960px;
-    width: 100%;
-    padding: 12px 16px;
-    background: rgba(255, 255, 255, 0.95);
-    border-radius: 12px;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-    margin: 0 auto 20px auto;
-    flex-wrap: wrap;
+body {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  min-height: 100vh;
+  padding: 20px;
+}
+
+header {
+  background: rgba(255, 255, 255, 0.95);
+  padding: 15px 30px;
+  border-radius: 15px;
+  margin-bottom: 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
 }
 
 .voteTitle {
-    font-weight: bold;
-    font-size: 1.1em;
-    color: #1e3a8a;
+  font-size: 1.5em;
+  font-weight: bold;
+  color: #333;
 }
 
 .voteControls {
-    display: flex;
-    gap: 10px;
-    flex-wrap: wrap;
+  display: flex;
+  gap: 10px;
 }
 
-.voteControls button {
-    background: linear-gradient(to right, #3b82f6, #6366f1);
-    color: white;
-    border: none;
-    border-radius: 6px;
-    padding: 8px 14px;
-    font-size: 0.9em;
-    cursor: pointer;
-    transition: all 0.3s ease;
-}
-
-.voteControls button:hover {
-    background: linear-gradient(to right, #2563eb, #4f46e5);
-    transform: translateY(-1px);
-}
-
-/* Основная раскладка */
 .layout {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    width: 100%;
-    max-width: 960px;
-    margin: 0 auto;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 20px;
+  max-width: 1200px;
+  margin: 0 auto;
 }
 
-/* Панели */
 .panel {
-    background: white;
-    border-radius: 12px;
-    box-shadow: 0 8px 25px rgba(0,0,0,0.1);
-    padding: 25px;
-    width: 100%;
-    max-width: 500px;
-    box-sizing: border-box;
-    margin-bottom: 20px;
+  background: rgba(255, 255, 255, 0.95);
+  padding: 30px;
+  border-radius: 20px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
 }
 
 .panel h2 {
-    margin-top: 0;
-    color: #1e3a8a;
-    text-align: center;
-    margin-bottom: 20px;
+  color: #333;
+  margin-bottom: 20px;
+  text-align: center;
 }
 
-/* Поля ввода */
 input[type="text"],
 input[type="email"],
 input[type="password"] {
-    width: 100%;
-    padding: 12px;
-    margin: 8px 0;
-    border: 1px solid #cbd5e1;
-    border-radius: 8px;
-    box-sizing: border-box;
-    font-size: 1em;
-    transition: border-color 0.3s ease;
+  width: 100%;
+  padding: 12px 15px;
+  margin: 8px 0;
+  border: 2px solid #e1e5e9;
+  border-radius: 10px;
+  font-size: 16px;
 }
 
-input[type="text"]:focus,
-input[type="email"]:focus,
-input[type="password"]:focus {
-    outline: none;
-    border-color: #3b82f6;
-    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
-}
-
-/* Кнопки */
 button {
-    width: 100%;
-    padding: 12px;
-    margin: 8px 0;
-    background: linear-gradient(to right, #3b82f6, #6366f1);
-    color: white;
-    border: none;
-    border-radius: 8px;
-    font-size: 1em;
-    cursor: pointer;
-    transition: all 0.3s ease;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border: none;
+  padding: 12px 20px;
+  margin: 5px;
+  border-radius: 10px;
+  cursor: pointer;
+  font-size: 16px;
 }
 
 button:hover {
-    background: linear-gradient(to right, #2563eb, #4f46e5);
-    transform: translateY(-1px);
+  opacity: 0.9;
 }
 
-button:active {
-    transform: translateY(0);
-}
-
-/* Специальные кнопки */
-.btn-logout {
-    background: linear-gradient(to right, #ef4444, #dc2626) !important;
-    width: auto !important;
-    padding: 8px 16px !important;
-}
-
-.btn-logout:hover {
-    background: linear-gradient(to right, #dc2626, #b91c1c) !important;
-}
-
-.btn-secondary {
-    background: linear-gradient(to right, #6b7280, #4b5563) !important;
-}
-
-.btn-secondary:hover {
-    background: linear-gradient(to right, #4b5563, #374151) !important;
-}
-
-/* Разделители */
-hr {
-    border: none;
-    border-top: 1px solid #e2e8f0;
-    margin: 20px 0;
-}
-
-/* Табы */
 .tabs {
-    display: flex;
-    gap: 5px;
-    margin-bottom: 20px;
-    background: #f1f5f9;
-    padding: 5px;
-    border-radius: 8px;
+  display: flex;
+  gap: 10px;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
 }
 
-.tabs button {
-    flex: 1;
-    background: transparent;
-    color: #64748b;
-    border: none;
-    border-radius: 6px;
-    padding: 10px;
-    margin: 0;
+.poll-card {
+  background: #f8f9fa;
+  padding: 15px;
+  margin: 10px 0;
+  border-radius: 10px;
+  border-left: 4px solid #667eea;
 }
 
-.tabs button.active {
-    background: white;
-    color: #1e3a8a;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+.poll-card.active {
+  border-left-color: #28a745;
 }
 
-/* Адаптивность */
-@media (max-width: 768px) {
-    body {
-        padding: 10px;
-    }
-
-    #voteHeader {
-        flex-direction: column;
-        align-items: stretch;
-        gap: 10px;
-    }
-
-    .voteControls {
-        justify-content: center;
-    }
-
-    .panel {
-        padding: 20px;
-    }
-
-    .tabs {
-        flex-direction: column;
-    }
+.option-field {
+  display: flex;
+  gap: 10px;
+  margin: 10px 0;
+  align-items: center;
 }
 
-@media (max-width: 480px) {
-    body {
-        padding: 5px;
-    }
+.auth-section {
+  margin: 20px 0;
+}
 
-    .panel {
-        padding: 15px;
-    }
-
-    button, input {
-        padding: 14px 10px;
-    }
+.auth-section h3 {
+  margin-bottom: 15px;
+  color: #333;
 }
