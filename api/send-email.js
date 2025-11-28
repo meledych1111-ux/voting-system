@@ -5,36 +5,35 @@ module.exports = async (req, res) => {
     res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
     res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
     
-    if (req.method === 'OPTIONS') {
-        return res.status(200).end();
-    }
-    
-    if (req.method !== 'POST') {
-        return res.status(405).json({ error: 'Method not allowed' });
-    }
+    if (req.method === 'OPTIONS') return res.status(200).end();
+    if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
     try {
         const { name, email, code, type = 'confirmation', newPassword } = req.body;
         
-        console.log('📧 Email request for:', email, 'Type:', type);
+        console.log('📧 Sending email to:', email, 'Code:', code);
 
-        // Проверяем переменные окружения
-        if (!process.env.EMAILJS_PUBLIC_KEY || !process.env.EMAILJS_SERVICE_ID || !process.env.EMAILJS_TEMPLATE_ID) {
-            console.log('❌ Missing EmailJS environment variables');
+        // Проверяем наличие всех переменных
+        const missingVars = [];
+        if (!process.env.EMAILJS_PUBLIC_KEY) missingVars.push('EMAILJS_PUBLIC_KEY');
+        if (!process.env.EMAILJS_SERVICE_ID) missingVars.push('EMAILJS_SERVICE_ID');
+        if (!process.env.EMAILJS_TEMPLATE_ID) missingVars.push('EMAILJS_TEMPLATE_ID');
+
+        if (missingVars.length > 0) {
+            console.log('❌ Missing variables:', missingVars);
             return res.status(500).json({ 
                 success: false, 
-                error: 'EmailJS configuration missing'
+                error: 'Missing environment variables',
+                missing: missingVars
             });
         }
 
-        // Данные для EmailJS API - ТОЧНО как в вашем шаблоне
+        // Подготавливаем данные
         const templateParams = {
-            to_name: name || 'Пользователь',
-            confirmation_code: code  // именно так как в вашем шаблоне
-            // to_email не нужен, если не используется в шаблоне
+            to_name: name || 'User',
+            confirmation_code: code
         };
 
-        // Добавляем пароль только если он есть (для восстановления)
         if (newPassword) {
             templateParams.new_password = newPassword;
         }
@@ -46,20 +45,16 @@ module.exports = async (req, res) => {
             template_params: templateParams
         };
 
-        console.log('🔄 Calling EmailJS API...', {
-            service_id: process.env.EMAILJS_SERVICE_ID ? '✅' : '❌',
-            template_id: process.env.EMAILJS_TEMPLATE_ID ? '✅' : '❌',
-            user_id: process.env.EMAILJS_PUBLIC_KEY ? '✅' : '❌'
-        });
+        console.log('🔄 Sending to EmailJS API...');
 
-        // Вызов EmailJS API
+        // Отправляем запрос
         const response = await fetch('https://api.emailjs.com/api/v1.0/email/send', {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
+            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(emailData)
         });
+
+        const responseText = await response.text();
 
         if (response.ok) {
             console.log('✅ Email sent successfully to:', email);
@@ -68,24 +63,27 @@ module.exports = async (req, res) => {
                 message: 'Email sent successfully'
             });
         } else {
-            const errorText = await response.text();
-            console.error('❌ EmailJS API error:', response.status, errorText);
+            console.error('❌ EmailJS API error:', response.status, responseText);
             
-            // Детальная информация об ошибке
+            // Анализируем ошибку
+            let errorMessage = `EmailJS error: ${response.status}`;
+            if (responseText.includes('Invalid user ID')) {
+                errorMessage = 'Invalid EMAILJS_PUBLIC_KEY';
+            } else if (responseText.includes('Invalid service ID')) {
+                errorMessage = 'Invalid EMAILJS_SERVICE_ID';
+            } else if (responseText.includes('Invalid template ID')) {
+                errorMessage = 'Invalid EMAILJS_TEMPLATE_ID';
+            }
+
             return res.status(500).json({ 
                 success: false, 
-                error: `EmailJS error: ${response.status}`,
-                details: errorText,
-                debug: {
-                    service_id: process.env.EMAILJS_SERVICE_ID?.substring(0, 10) + '...',
-                    template_id: process.env.EMAILJS_TEMPLATE_ID?.substring(0, 10) + '...',
-                    user_id: process.env.EMAILJS_PUBLIC_KEY?.substring(0, 10) + '...'
-                }
+                error: errorMessage,
+                details: responseText
             });
         }
         
     } catch (error) {
-        console.error('❌ Email sending failed:', error);
+        console.error('❌ Network error:', error);
         return res.status(500).json({ 
             success: false, 
             error: 'Network error',
