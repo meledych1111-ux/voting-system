@@ -177,115 +177,6 @@ hr {
     box-shadow: 0 1px 3px rgba(0,0,0,0.1);
 }
 
-/* Элементы опросов */
-.poll-item {
-    background: #f8fafc;
-    border: 1px solid #e2e8f0;
-    border-radius: 8px;
-    padding: 15px;
-    margin: 10px 0;
-    transition: all 0.3s ease;
-}
-
-.poll-item:hover {
-    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-    transform: translateY(-1px);
-}
-
-.poll-option {
-    margin-bottom: 8px !important;
-}
-
-/* Результаты голосования */
-.result-item {
-    display: flex;
-    align-items: center;
-    margin: 10px 0;
-    gap: 10px;
-}
-
-.option {
-    flex: 1;
-    font-weight: 500;
-}
-
-.bar-container {
-    flex: 2;
-    background: #e2e8f0;
-    border-radius: 10px;
-    overflow: hidden;
-    height: 24px;
-}
-
-.bar {
-    background: linear-gradient(to right, #3b82f6, #6366f1);
-    height: 100%;
-    border-radius: 10px;
-    transition: width 0.5s ease;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: white;
-    font-size: 0.8em;
-    font-weight: bold;
-}
-
-.count {
-    flex: 0.5;
-    text-align: right;
-    font-weight: 500;
-    color: #64748b;
-}
-
-/* Варианты голосования */
-#voteOptions label {
-    display: block;
-    padding: 12px;
-    margin: 8px 0;
-    background: white;
-    border: 2px solid #e2e8f0;
-    border-radius: 8px;
-    cursor: pointer;
-    transition: all 0.2s ease;
-}
-
-#voteOptions label:hover {
-    border-color: #3b82f6;
-    background: #f0f9ff;
-}
-
-#voteOptions input[type="radio"] {
-    margin-right: 10px;
-}
-
-/* Сообщения */
-.error-state {
-    background: #fef2f2;
-    border: 1px solid #fecaca;
-    border-radius: 8px;
-    padding: 15px;
-    color: #dc2626;
-    text-align: center;
-}
-
-.success-message {
-    background: #f0fdf4;
-    border: 1px solid #bbf7d0;
-    border-radius: 8px;
-    padding: 15px;
-    color: #16a34a;
-    text-align: center;
-}
-
-.info-message {
-    background: #f0f9ff;
-    border: 1px solid #bae6fd;
-    border-radius: 8px;
-    padding: 15px;
-    color: #0369a1;
-    text-align: center;
-}
-
 /* Адаптивность */
 @media (max-width: 768px) {
     body {
@@ -308,15 +199,6 @@ hr {
 
     .tabs {
         flex-direction: column;
-    }
-
-    .result-item {
-        flex-direction: column;
-        align-items: stretch;
-    }
-
-    .bar-container {
-        margin: 5px 0;
     }
 }
 
