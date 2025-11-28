@@ -27,7 +27,7 @@ function renderPollCreator(container) {
     <input id="pollQuestion" type="text" placeholder="Вопрос" /><br/>
     <div id="optionFields"></div>
     <button onclick="addOptionField()">➕ Добавить вариант</button>
-    <button onclick="addOtherOption()">➕ Добавить “Иное”</button><br/><br/>
+    <button onclick="addOtherOption()">➕ Добавить "Иное"</button><br/><br/>
     <button onclick="createPoll()">✅ Создать опрос</button>
   `;
   addOptionField();
@@ -157,6 +157,7 @@ function renderAdminSettings(container) {
     <button onclick="resetPoll()">🔄 Сбросить активный опрос</button><br/>
     <button onclick="clearAllPolls()">🗑️ Очистить все опросы</button><br/>
     <button onclick="changeAdminPassword()">🔐 Сменить пароль</button>
+    <button onclick="wipeAllData()">🧹 Очистить всё</button>
   `;
 }
 
@@ -177,38 +178,44 @@ function clearAllPolls() {
   renderPollList(document.getElementById('adminTabContent'));
 }
 
-// ЗАМЕНИТЕ функцию changeAdminPassword на эту:
 function changeAdminPassword() {
-  const email = localStorage.getItem('adminLoggedIn');
-  const newPass = prompt("Введите новый пароль:");
-  if (!newPass) return;
+  const email = localStorage.getItem('adminLoggedIn') || prompt("Введите email администратора");
+  const newPass = prompt("Введите новый пароль");
+  if (!email || !newPass) return;
   
   const admins = JSON.parse(localStorage.getItem('admins')) || {};
+  if (!admins[email]) return alert("Админ не найден");
+  
   admins[email].password = btoa(newPass);
   localStorage.setItem('admins', JSON.stringify(admins));
   
-  if (!window.EMAILJS_KEYS) {
-    alert('Пароль обновлён: ' + newPass);
-    return;
-  }
-
-  emailjs.send(
-    window.EMAILJS_KEYS.serviceId,
-    window.EMAILJS_KEYS.templateId,
-    {
-      to_name: "Администратор",
-      to_email: email,
-      confirmation_code: "Пароль изменен",
-      new_password: newPass
-    }
-  ).then(() => {
-    console.log("✅ Пароль отправлен");
-  }).catch((error) => {
-    console.error("❌ Ошибка отправки:", error);
+  // ОТПРАВКА EMAIL С ПЕРЕМЕННЫМИ ОКРУЖЕНИЯ
+  if (window.EMAILJS_KEYS) {
+    emailjs.send(
+      window.EMAILJS_KEYS.serviceId,
+      window.EMAILJS_KEYS.templateId,
+      {
+        to_name: "Администратор",
+        to_email: email,
+        confirmation_code: "Пароль изменен",
+        new_password: newPass
+      }
+    ).then(() => {
+      console.log("✅ Пароль отправлен на email");
+    }).catch((error) => {
+      console.error("❌ Ошибка отправки:", error);
+      alert("Пароль обновлён: " + newPass);
+    });
+  } else {
     alert("Пароль обновлён: " + newPass);
-  });
+  }
   
   alert("Пароль обновлён");
 }
 
-
+function wipeAllData() {
+  if (!confirm("Удалить ВСЕ данные?")) return;
+  localStorage.clear();
+  alert("Все данные очищены.");
+  renderAuth();
+}
