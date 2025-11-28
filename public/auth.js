@@ -1,34 +1,4 @@
-// ДОБАВЬТЕ ЭТУ ФУНКЦИЮ В НАЧАЛО ФАЙЛА
-function sendConfirmationCode(toName, toEmail, code) {
-  if (!window.EMAILJS_KEYS) {
-    alert('Код подтверждения: ' + code);
-    return;
-  }
-
-  emailjs.send(
-    window.EMAILJS_KEYS.serviceId,
-    window.EMAILJS_KEYS.templateId,
-    {
-      to_name: toName,
-      confirmation_code: code
-    }
-  ).then(() => {
-    console.log("✅ Код отправлен");
-  }).catch((error) => {
-    console.error("❌ Ошибка отправки:", error);
-    alert("Код подтверждения: " + code);
-  });
-}
-
-// ОСТАЛЬНОЙ ВАШ КОД ОСТАВЬТЕ БЕЗ ИЗМЕНЕНИЙ
-function renderAuth() {
-  // ваш существующий код
-}
-
-function loginUser() {
-  // ваш существующий код
-}
-
+// ====== ОСНОВНЫЕ ФУНКЦИИ АУТЕНТИФИКАЦИИ ======
 function renderAuth() {
   const container = document.getElementById('authContent');
   const loggedIn = localStorage.getItem('loggedInAs');
@@ -41,57 +11,82 @@ function renderAuth() {
   if (loggedIn && loggedIn !== 'admin') return renderVoteUI();
 
   container.innerHTML = `
-    <h3>👤 Вход пользователя</h3>
-    <input id="userNameInput" type="text" placeholder="Ваше имя" />
-    <button onclick="loginUser()">➡️ Войти как пользователь</button>
+    <div class="auth-section">
+      <h3>👤 Вход пользователя</h3>
+      <input id="userNameInput" type="text" placeholder="Ваше имя" />
+      <button onclick="loginUser()">➡️ Войти как пользователь</button>
+    </div>
+    
     <hr/>
-    <h3>🔐 Вход администратора</h3>
-    <input id="adminEmail" type="email" placeholder="Email" /><br/>
-    <input id="adminPassword" type="password" placeholder="Пароль" /><br/>
-    <button onclick="loginAdmin()">➡️ Войти как админ</button>
-    <button onclick="startAdminRegistration()">📝 Регистрация админа</button>
+    
+    <div class="auth-section">
+      <h3>🔐 Вход администратора</h3>
+      <input id="adminEmail" type="email" placeholder="Email" />
+      <input id="adminPassword" type="password" placeholder="Пароль" />
+      <button onclick="loginAdmin()">➡️ Войти как админ</button>
+      <button onclick="startAdminRegistration()">📝 Регистрация админа</button>
+    </div>
+    
     <hr/>
-    <h3>🔑 Восстановление пароля</h3>
-    <input id="resetEmail" type="email" placeholder="Email для восстановления" />
-    <button onclick="startPasswordReset()">🔄 Восстановить пароль</button>
+    
+    <div class="auth-section">
+      <h3>🔑 Восстановление пароля</h3>
+      <input id="resetEmail" type="email" placeholder="Email для восстановления" />
+      <button onclick="startPasswordReset()">🔄 Восстановить пароль</button>
+    </div>
   `;
 }
 
-// ====== Пользователь ======
+// ====== ПОЛЬЗОВАТЕЛЬ ======
 function loginUser() {
   const name = document.getElementById('userNameInput').value.trim();
   if (!name) return alert("Введите имя");
   localStorage.setItem('loggedInAs', name);
   renderAuth();
+  updateVoteHeader();
 }
 
-// ====== Админ вход ======
+// ====== АДМИН ВХОД ======
 function loginAdmin() {
   const email = document.getElementById('adminEmail').value.trim();
   const password = document.getElementById('adminPassword').value.trim();
   const admins = JSON.parse(localStorage.getItem('admins')) || {};
-  if (!admins[email]) return alert("Админ не найден");
+  
+  if (!admins[email]) return alert("Администратор не найден");
   if (admins[email].password !== btoa(password)) return alert("Неверный пароль");
+  
   localStorage.setItem('loggedInAs', 'admin');
+  localStorage.setItem('adminLoggedIn', email);
   renderAuth();
+  updateVoteHeader();
 }
 
-// ====== Регистрация с подтверждением ======
+// ====== РЕГИСТРАЦИЯ С ПОДТВЕРЖДЕНИЕМ ======
 function startAdminRegistration() {
   const email = document.getElementById('adminEmail').value.trim();
   const password = document.getElementById('adminPassword').value.trim();
   const admins = JSON.parse(localStorage.getItem('admins')) || {};
-  if (admins[email]) return alert("Уже зарегистрирован");
+  
+  if (admins[email]) return alert("Администратор с таким email уже зарегистрирован");
+  if (!email || !password) return alert("Заполните все поля");
+  if (password.length < 6) return alert("Пароль должен быть не менее 6 символов");
 
   const code = generateConfirmationCode();
-  localStorage.setItem('pendingAdmin', JSON.stringify({ email, password, code }));
+  const hashedPassword = btoa(password);
+  
+  localStorage.setItem('pendingAdmin', JSON.stringify({ 
+    email, 
+    password: hashedPassword, 
+    code 
+  }));
+  
   sendConfirmationCode("Администратор", email, code);
 
   document.getElementById('authContent').innerHTML = `
     <h3>📧 Подтверждение регистрации</h3>
-    <p>Код отправлен на ${email}</p>
-    <input id="confirmCodeInput" type="text" placeholder="Введите код" />
-    <button onclick="completeAdminRegistration()">✅ Подтвердить</button>
+    <p>Код подтверждения отправлен на ${email}</p>
+    <input id="confirmCodeInput" type="text" placeholder="Введите 6-значный код" maxlength="6" />
+    <button onclick="completeAdminRegistration()">✅ Подтвердить регистрацию</button>
     <button onclick="renderAuth()">↩️ Назад</button>
   `;
 }
@@ -99,35 +94,49 @@ function startAdminRegistration() {
 function completeAdminRegistration() {
   const inputCode = document.getElementById('confirmCodeInput').value.trim();
   const pending = JSON.parse(localStorage.getItem('pendingAdmin'));
+  
   if (!pending) return alert("Нет данных для подтверждения");
-
-  if (inputCode !== pending.code) return alert("Неверный код");
+  if (inputCode !== pending.code) return alert("Неверный код подтверждения");
 
   const admins = JSON.parse(localStorage.getItem('admins')) || {};
-  admins[pending.email] = { password: btoa(pending.password) };
+  admins[pending.email] = { 
+    password: pending.password,
+    created: new Date().toISOString()
+  };
+  
   localStorage.setItem('admins', JSON.stringify(admins));
   localStorage.setItem('loggedInAs', 'admin');
+  localStorage.setItem('adminLoggedIn', pending.email);
   localStorage.removeItem('pendingAdmin');
-  alert("Регистрация завершена");
+  
+  alert("✅ Регистрация администратора завершена!");
   renderAuth();
+  updateVoteHeader();
 }
 
-// ====== Восстановление с подтверждением ======
+// ====== ВОССТАНОВЛЕНИЕ ПАРОЛЯ С ПОДТВЕРЖДЕНИЕМ ======
 function startPasswordReset() {
   const email = document.getElementById('resetEmail').value.trim();
   const admins = JSON.parse(localStorage.getItem('admins')) || {};
-  if (!admins[email]) return alert("Админ не найден");
+  
+  if (!admins[email]) return alert("Администратор с таким email не найден");
 
-  const newPass = Math.random().toString(36).slice(-8);
+  const newPass = generateRandomPassword();
   const code = generateConfirmationCode();
-  localStorage.setItem('pendingReset', JSON.stringify({ email, newPass, code }));
+  
+  localStorage.setItem('pendingReset', JSON.stringify({ 
+    email, 
+    newPass, 
+    code 
+  }));
+  
   sendConfirmationCode("Администратор", email, code);
 
   document.getElementById('authContent').innerHTML = `
     <h3>📧 Подтверждение восстановления</h3>
-    <p>Код отправлен на ${email}</p>
-    <input id="confirmCodeInput" type="text" placeholder="Введите код" />
-    <button onclick="completePasswordReset()">✅ Подтвердить</button>
+    <p>Код подтверждения отправлен на ${email}</p>
+    <input id="confirmCodeInput" type="text" placeholder="Введите 6-значный код" maxlength="6" />
+    <button onclick="completePasswordReset()">✅ Подтвердить восстановление</button>
     <button onclick="renderAuth()">↩️ Назад</button>
   `;
 }
@@ -135,42 +144,85 @@ function startPasswordReset() {
 function completePasswordReset() {
   const inputCode = document.getElementById('confirmCodeInput').value.trim();
   const pending = JSON.parse(localStorage.getItem('pendingReset'));
+  
   if (!pending) return alert("Нет данных для восстановления");
-
-  if (inputCode !== pending.code) return alert("Неверный код");
+  if (inputCode !== pending.code) return alert("Неверный код подтверждения");
 
   const admins = JSON.parse(localStorage.getItem('admins')) || {};
   admins[pending.email].password = btoa(pending.newPass);
+  admins[pending.email].lastPasswordReset = new Date().toISOString();
+  
   localStorage.setItem('admins', JSON.stringify(admins));
   localStorage.removeItem('pendingReset');
-  alert(`Пароль обновлён: ${pending.newPass}`);
+  
+  alert(`✅ Пароль успешно обновлён!\n\nНовый пароль: ${pending.newPass}\n\nСохраните его в надежном месте!`);
   renderAuth();
 }
 
-// ====== Отправка кода ======
+// ====== ОТПРАВКА КОДА ПОДТВЕРЖДЕНИЯ ======
+async function sendConfirmationCode(toName, toEmail, code) {
+  if (!window.EMAILJS_KEYS) {
+    await initializeEmailJS();
+  }
+
+  if (!window.EMAILJS_KEYS || !window.EMAILJS_KEYS.serviceId) {
+    alert(`Код подтверждения: ${code}`);
+    return;
+  }
+
+  if (typeof emailjs === 'undefined') {
+    alert(`Код подтверждения: ${code}`);
+    return;
+  }
+
+  try {
+    await emailjs.send(
+      window.EMAILJS_KEYS.serviceId,
+      window.EMAILJS_KEYS.templateId,
+      {
+        to_name: toName,
+        to_email: toEmail,
+        confirmation_code: code
+      }
+    );
+    console.log("✅ Код отправлен на email");
+  } catch (error) {
+    console.error("❌ Ошибка отправки:", error);
+    alert(`Код подтверждения: ${code}`);
+  }
+}
+
+// ====== ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ ======
 function generateConfirmationCode() {
-  return Math.floor(100000 + Math.random() * 900000).toString();
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  let code = '';
+  for (let i = 0; i < 6; i++) {
+    code += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
+  return code;
 }
 
-function sendConfirmationCode(toName, toEmail, code) {
-  emailjs.send("service_sj7db1v", "template_tsz83er", {
-    to_name: toName,
-    confirmation_code: code
-  }).then(() => {
-    console.log("Код подтверждения отправлен");
-  }).catch(() => {
-    alert("Ошибка при отправке кода");
-  });
+function generateRandomPassword() {
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789!@#$%';
+  let password = '';
+  for (let i = 0; i < 10; i++) {
+    password += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
+  return password;
 }
 
-// ====== Выход ======
+// ====== ВЫХОД ======
 function logout() {
   localStorage.removeItem('loggedInAs');
+  localStorage.removeItem('adminLoggedIn');
   document.getElementById('adminPanel').style.display = 'none';
   document.getElementById('userPanel').style.display = 'none';
   document.getElementById('authPanel').style.display = 'block';
   renderAuth();
+  updateVoteHeader();
 }
+
+// ====== ОБНОВЛЕНИЕ ЗАГОЛОВКА ГОЛОСОВАНИЯ ======
 function updateVoteHeader() {
   const role = localStorage.getItem('loggedInAs');
   const header = document.getElementById('voteHeader');
@@ -184,12 +236,17 @@ function updateVoteHeader() {
   if (role) {
     header.style.display = 'flex';
     controls.innerHTML = `
-      <button onclick="castVote()">Голосовать</button>
-      <button onclick="viewResults()">Результаты</button>
-      <button onclick="logout()">Выйти</button>
+      <button onclick="castVote()">🗳️ Голосовать</button>
+      <button onclick="viewResults()">📊 Результаты</button>
+      <button onclick="logout()">🚪 Выйти</button>
     `;
   } else {
     header.style.display = 'none';
   }
 }
 
+// Инициализация при загрузке
+document.addEventListener('DOMContentLoaded', function() {
+  renderAuth();
+  updateVoteHeader();
+});
