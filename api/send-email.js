@@ -1,4 +1,4 @@
-// api/send-email.js - ФИКСИРОВАННАЯ ВЕРСИЯ
+// api/send-email.js - СИНХРОННАЯ ОТПРАВКА ЧЕРЕЗ EMAILJS
 module.exports = async (req, res) => {
     // CORS headers
     res.setHeader('Access-Control-Allow-Origin', '*');
@@ -11,58 +11,73 @@ module.exports = async (req, res) => {
     try {
         const { name, email, code, type = 'confirmation', newPassword } = req.body;
         
-        console.log('📧 Email request for:', email);
+        console.log('📧 Sending email to:', email);
 
-        // ВСЕГДА возвращаем успех чтобы избежать всплывающих окон
-        // Email будет отправляться в фоне, даже если есть ошибки
-        
-        res.status(200).json({ 
-            success: true, 
-            message: 'Email processing completed'
+        // Проверяем наличие переменных
+        if (!process.env.EMAILJS_PUBLIC_KEY || !process.env.EMAILJS_SERVICE_ID || !process.env.EMAILJS_TEMPLATE_ID) {
+            console.log('❌ Missing EmailJS environment variables');
+            return res.status(500).json({ 
+                success: false, 
+                error: 'EmailJS configuration missing'
+            });
+        }
+
+        // Подготавливаем данные для EmailJS
+        const templateParams = {
+            to_name: name || 'User',
+            confirmation_code: code
+        };
+
+        if (newPassword) {
+            templateParams.new_password = newPassword;
+        }
+
+        const emailData = {
+            service_id: process.env.EMAILJS_SERVICE_ID,
+            template_id: process.env.EMAILJS_TEMPLATE_ID,
+            user_id: process.env.EMAILJS_PUBLIC_KEY,
+            template_params: templateParams
+        };
+
+        console.log('🔄 Calling EmailJS API synchronously...');
+
+        // СИНХРОННАЯ отправка через EmailJS
+        const response = await fetch('https://api.emailjs.com/api/v1.0/email/send', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(emailData)
         });
 
-        // Асинхронно пытаемся отправить email (без блокировки ответа)
-        setTimeout(async () => {
-            try {
-                const templateParams = {
-                    to_name: name || 'User',
-                    confirmation_code: code
-                };
+        const responseText = await response.text();
 
-                if (newPassword) {
-                    templateParams.new_password = newPassword;
-                }
-
-                const emailData = {
-                    service_id: process.env.EMAILJS_SERVICE_ID,
-                    template_id: process.env.EMAILJS_TEMPLATE_ID,
-                    user_id: process.env.EMAILJS_PUBLIC_KEY,
-                    template_params: templateParams
-                };
-
-                const response = await fetch('https://api.emailjs.com/api/v1.0/email/send', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(emailData)
-                });
-
-                if (response.ok) {
-                    console.log('✅ Email sent successfully to:', email);
-                } else {
-                    console.log('📧 Email simulation for:', email, 'Code:', code);
-                    // Логируем но не показываем пользователю
-                }
-            } catch (error) {
-                console.log('📧 Email simulation for:', email, 'Code:', code);
-            }
-        }, 100);
+        if (response.ok) {
+            console.log('✅ Email sent successfully via EmailJS to:', email);
+            return res.status(200).json({ 
+                success: true, 
+                message: 'Email sent successfully'
+            });
+        } else {
+            console.error('❌ EmailJS API error:', response.status, responseText);
+            
+            // Анализируем ошибку
+            let errorMessage = 'Email service error';
+            if (responseText.includes('Invalid user ID')) errorMessage = 'Invalid Public Key';
+            else if (responseText.includes('Invalid service ID')) errorMessage = 'Invalid Service ID';
+            else if (responseText.includes('Invalid template ID')) errorMessage = 'Invalid Template ID';
+            
+            return res.status(500).json({ 
+                success: false, 
+                error: errorMessage,
+                details: responseText.substring(0, 100) // первые 100 символов ошибки
+            });
+        }
         
     } catch (error) {
-        console.error('Email error:', error);
-        // Всегда возвращаем успех чтобы избежать alert
-        res.status(200).json({ 
-            success: true, 
-            message: 'Email processing completed'
+        console.error('❌ Network error:', error);
+        return res.status(500).json({ 
+            success: false, 
+            error: 'Network error',
+            details: error.message
         });
     }
 };
