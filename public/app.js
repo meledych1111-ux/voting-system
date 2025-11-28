@@ -799,10 +799,14 @@ function generateRandomPassword() {
     }
     return password;
 }
+
+// ЗАМЕНИТЕ ЭТУ ФУНКЦИЮ - ТОЛЬКО ОДИН РАЗ!
 async function sendConfirmationEmail(name, email, code, type = 'confirmation', newPassword = null) {
     try {
+        console.log('📧 Sending confirmation to:', email);
+        
         const payload = {
-            name: name,
+            name: name || 'Администратор',
             email: email,
             code: code,
             type: type
@@ -823,31 +827,29 @@ async function sendConfirmationEmail(name, email, code, type = 'confirmation', n
         const result = await response.json();
         
         if (result.success) {
-            console.log('✅ Email sent successfully');
+            console.log('✅ Email sent via EmailJS');
             return true;
         } else {
-            // Если EmailJS вернул ошибку, показываем данные пользователю
-            console.error('❌ Email sending failed:', result.error);
-            
+            console.log('❌ Email failed, showing fallback');
+            // Fallback
             if (newPassword) {
-                alert(`📧 Сервис email временно недоступен\n\nНовый пароль: ${newPassword}\nКод подтверждения: ${code}\n\nСохраните эту информацию!`);
+                alert(`📧 ${result.error}\n\nНовый пароль: ${newPassword}\nКод: ${code}\n\nСохраните эту информацию!`);
             } else {
-                alert(`📧 Сервис email временно недоступен\nКод подтверждения: ${code}\n\nИспользуйте этот код для подтверждения.`);
+                alert(`📧 ${result.error}\nКод: ${code}\n\nИспользуйте код для подтверждения.`);
             }
             return false;
         }
     } catch (error) {
-        console.error('❌ Network error:', error);
-        // Fallback при сетевой ошибке
+        console.error('Network error:', error);
+        // Fallback
         if (newPassword) {
-            alert(`📧 Ошибка сети\n\nНовый пароль: ${newPassword}\nКод подтверждения: ${code}\n\nСохраните эту информацию!`);
+            alert(`📧 Ошибка сети\n\nНовый пароль: ${newPassword}\nКод: ${code}\n\nСохраните эту информацию!`);
         } else {
-            alert(`📧 Ошибка сети\nКод подтверждения: ${code}\n\nИспользуйте этот код для подтверждения.`);
+            alert(`📧 Ошибка сети\nКод: ${code}\n\nИспользуйте код для подтверждения.`);
         }
         return false;
     }
 }
-
 
 
 // Делаем функции глобальными для HTML
