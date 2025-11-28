@@ -1,35 +1,38 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-    <meta charset="UTF-8" />
-    <title>🎉 Система голосования</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <link rel="stylesheet" href="style.css" />
-    <script src="https://cdn.jsdelivr.net/npm/emailjs-com@3/dist/email.min.js"></script>
+  <meta charset="UTF-8" />
+  <title>🎉 Система голосования</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="stylesheet" href="style.css" />
+  <script src="https://cdn.jsdelivr.net/npm/emailjs-com@3/dist/email.min.js"></script>
 </head>
 <body>
-    <header id="voteHeader" style="display:none;">
-        <div class="voteTitle">🗳️ Система голосования</div>
-        <div class="voteControls" id="voteControls"></div>
-    </header>
+  <header id="voteHeader" style="display:none;">
+    <div class="voteTitle">🗳️ Система голосования</div>
+    <div class="voteControls" id="voteControls"></div>
+  </header>
 
-    <main class="layout">
-        <section class="panel" id="authPanel">
-            <h2>🔐 Вход в систему</h2>
-            <div id="authContent"></div>
-        </section>
+  <main class="layout">
+    <section class="panel" id="authPanel">
+      <h2>🔐 Вход</h2>
+      <div id="authContent"></div>
+    </section>
 
-        <section class="panel" id="adminPanel" style="display:none;">
-            <h2>🛠️ Панель администратора</h2>
-            <div id="adminContent"></div>
-        </section>
+    <section class="panel" id="adminPanel" style="display:none;">
+      <h2>🛠️ Админ‑панель</h2>
+      <div id="adminContent"></div>
+    </section>
 
-        <section class="panel" id="userPanel" style="display:none;">
-            <h2>👤 Участие в голосовании</h2>
-            <div id="userContent"></div>
-        </section>
-    </main>
+    <section class="panel" id="userPanel" style="display:none;">
+      <h2>👤 Голосование</h2>
+      <div id="userContent"></div>
+    </section>
+  </main>
 
-    <script src="app.js"></script>
+  <script src="script.js"></script>
+  <script src="auth.js"></script>
+  <script src="admin-panel.js"></script>
+  <script src="vote.js"></script>
 </body>
 </html>
