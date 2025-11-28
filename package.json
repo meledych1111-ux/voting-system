@@ -1,0 +1,20 @@
+{
+  "name": "voting-system",
+  "version": "1.0.0",
+  "description": "Система голосования с подтверждением по email",
+  "type": "module",
+  "scripts": {
+    "dev": "vc dev"
+  },
+  "dependencies": {
+    "emailjs-com": "^3.2.0"
+  },
+  "keywords": [
+    "voting",
+    "poll",
+    "emailjs",
+    "vercel"
+  ],
+  "author": "Your Name",
+  "license": "MIT"
+}
