@@ -1,8 +1,9 @@
 {
   "name": "voting-system",
   "version": "1.0.0",
-  "description": "Система голосования",
   "scripts": {
-    "dev": "vc dev"
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start"
   }
 }
